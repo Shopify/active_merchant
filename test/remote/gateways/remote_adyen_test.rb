@@ -562,7 +562,7 @@ class RemoteAdyenTest < Test::Unit::TestCase
   end
 
   def test_successful_purchase_with_apple_pay
-    response = @gateway.purchase(@amount, @apple_pay_card, @options.merge(switch_cryptogram_mapping_nt: true))
+    response = @gateway.purchase(@amount, @apple_pay_card, @options.merge(switch_cryptogram_mapping_nt: false))
     assert_success response
     assert_equal '[capture-received]', response.message
   end
@@ -592,7 +592,7 @@ class RemoteAdyenTest < Test::Unit::TestCase
   end
 
   def test_successful_purchase_with_google_pay_and_truncate_order_id
-    response = @gateway.purchase(@amount, @google_pay_card, @options.merge(order_id: @long_order_id, switch_cryptogram_mapping_nt: true))
+    response = @gateway.purchase(@amount, @google_pay_card, @options.merge(order_id: @long_order_id, switch_cryptogram_mapping_nt: false))
     assert_success response
     assert_equal '[capture-received]', response.message
   end
