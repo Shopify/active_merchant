@@ -248,10 +248,10 @@ module ActiveMerchant #:nodoc:
         @options[:access_token] = response[:accessToken]
         @options[:token_expires] = response[:expires]
         @options[:new_credentials] = true
-
+        success = response[:accessToken].present?
         Response.new(
-          response[:accessToken].present?,
-          message_from(response),
+          success,
+          message_from(response, success),
           response,
           test: test?,
           error_code: response[:statusCode]
@@ -294,10 +294,10 @@ module ActiveMerchant #:nodoc:
 
       def api_request(action, post, authorization = nil, method = :post)
         response = parse ssl_request(method, url(action, authorization), post.to_json, headers)
-
+        success = success_from(action, response)
         Response.new(
-          success_from(action, response),
-          message_from(response),
+          success,
+          message_from(response, success),
           response,
           authorization: authorization_from(action, response, post),
           test: test?,
@@ -310,7 +310,7 @@ module ActiveMerchant #:nodoc:
           @options[:access_token] = ''
           @options[:new_credentials] = true
         end
-        Response.new(false, message_from(response), response, test: test?)
+        Response.new(false, message_from(response, false), response, test: test?)
       end
 
       def success_from(action, response)
@@ -323,7 +323,9 @@ module ActiveMerchant #:nodoc:
         end
       end
 
-      def message_from(response)
+      def message_from(response, success_stat)
+        return extract_error(response) unless success_stat || response['TraceId'].nil?
+
         response[:title] || response[:responseMessage] || response[:statusName] || response[:status]
       end
 
@@ -341,6 +343,10 @@ module ActiveMerchant #:nodoc:
 
       def cast_bool(value)
         ![false, 0, '', '0', 'f', 'F', 'false', 'FALSE'].include?(value)
+      end
+
+      def extract_error(response)
+        (response.reject { |key, _| %w[TraceId access_token token_expires].include?(key) }).to_json
       end
     end
   end
