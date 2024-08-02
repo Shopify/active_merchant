@@ -555,7 +555,7 @@ module ActiveMerchant #:nodoc:
           add_bank_account(post, payment, options, action)
         else
           add_mpi_data_for_network_tokenization_card(post, payment, options) if payment.is_a?(NetworkTokenizationCreditCard)
-          add_card(post, payment, options)
+          add_card(post, payment)
         end
       end
 
@@ -609,7 +609,6 @@ module ActiveMerchant #:nodoc:
 
         post[:additionalData] = {} unless post[:additionalData]
         post[:additionalData][:networkTxReference] = ntid
-
       end
 
       def add_reference(post, authorization, options = {})
@@ -632,7 +631,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_recurring_contract(post, options = {}, payment = nil)
-        return unless options[:recurring_contract_type] || ( payment.is_a?(NetworkTokenizationCreditCard) && payment.mobile_wallet? )
+        return unless options[:recurring_contract_type] || payment.try(:network_token?)
 
         post[:recurring] ||= {}
         post[:recurring][:contract] = options[:recurring_contract_type] if options[:recurring_contract_type]
@@ -640,7 +639,8 @@ module ActiveMerchant #:nodoc:
         post[:recurring][:recurringExpiry] = options[:recurring_expiry] if options[:recurring_expiry]
         post[:recurring][:recurringFrequency] = options[:recurring_frequency] if options[:recurring_frequency]
         post[:recurring][:tokenService] = options[:token_service] if options[:token_service]
-        if payment.try(:source) == :network_token && options[:switch_cryptogram_mapping_nt]
+
+        if payment.try(:network_token?) && options[:switch_cryptogram_mapping_nt]
           post[:recurring][:contract] = 'EXTERNAL'
           post[:recurring][:tokenService] = case payment.brand
                                             when 'visa' then 'VISATOKENSERVICE'
